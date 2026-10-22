@@ -1,0 +1,1114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>hongqq的微信</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+  body { background: #1a1a1a; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  .phone { width: 375px; height: 812px; background: #ededed; border-radius: 45px; border: 10px solid #2c2c2e; position: relative; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.9); }
+  .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 140px; height: 30px; background: #000; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; z-index: 1000; }
+  .status-bar { position: absolute; top: 0; left: 0; width: 100%; padding: 15px 25px; display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; color: #000; z-index: 999; }
+  .wechat-app { width: 100%; height: 100%; display: flex; flex-direction: column; position: absolute; top: 0; left: 0; }
+  .nav-header { padding: 50px 15px 15px; background: #ededed; display: flex; justify-content: center; align-items: center; font-weight: 600; font-size: 17px; position: relative; }
+  .nav-header .back-btn { position: absolute; left: 15px; bottom: 15px; cursor: pointer; color: #000; font-size: 16px; display: flex; align-items: center; }
+  .nav-header .back-btn::before { content: "‹"; font-size: 28px; margin-right: 2px; line-height: 1; }
+  .main-content { flex: 1; overflow-y: auto; position: relative; }
+  .tab-view { display: none; height: 100%; overflow-y: auto; padding-bottom: 60px; }
+  .tab-view.active { display: block; }
+  .chat-item { display: flex; align-items: center; padding: 12px 15px; background: #ededed; border-bottom: 1px solid #e0e0e0; cursor: pointer; }
+  .chat-item:active { background: #ddd; }
+  .chat-item.pinned { background: #e2e2e2; }
+  .chat-avatar { width: 48px; height: 48px; border-radius: 6px; background: #ccc; margin-right: 12px; display: flex; justify-content: center; align-items: center; color: #fff; font-size: 18px; font-weight: bold; flex-shrink: 0; position: relative; overflow: hidden; }
+  .chat-avatar img { width: 100%; height: 100%; border-radius: 6px; object-fit: cover; }
+  .chat-info { flex: 1; overflow: hidden; }
+  .chat-name { font-size: 16px; color: #000; margin-bottom: 4px; font-weight: 500; }
+  .chat-msg { color: #888; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .chat-time { font-size: 12px; color: #aaa; }
+  .chat-badge { background: #ff3b30; color: #fff; font-size: 11px; min-width: 18px; height: 18px; border-radius: 9px; display: flex; justify-content: center; align-items: center; padding: 0 4px; }
+  .chat-badge-red-dot { width: 8px; height: 8px; background: #ff3b30; border-radius: 50%; margin-top: 4px; }
+  .chat-mute { font-size: 14px; color: #b3b3b3; }
+  .contact-item { display: flex; align-items: center; padding: 15px; background: #fff; border-bottom: 1px solid #f0f0f0; }
+  .contact-avatar { width: 40px; height: 40px; border-radius: 4px; background: #07c160; margin-right: 12px; display: flex; justify-content: center; align-items: center; color: #fff; font-weight: bold; font-size: 16px; overflow: hidden; }
+  .contact-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .discover-item { display: flex; align-items: center; padding: 15px; background: #fff; border-bottom: 1px solid #f0f0f0; cursor: pointer; }
+  .discover-item:active { background: #f0f0f0; }
+  .discover-icon { width: 30px; height: 30px; margin-right: 12px; display: flex; justify-content: center; align-items: center; font-size: 20px; }
+  .discover-text { flex: 1; font-size: 16px; color: #000; }
+  .discover-arrow { color: #ccc; font-size: 18px; }
+  .bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; height: 60px; background: #f7f7f7; border-top: 1px solid #ddd; display: flex; justify-content: space-around; align-items: center; z-index: 100; }
+  .nav-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; color: #888; font-size: 10px; flex: 1; padding: 5px 0; position: relative; }
+  .nav-item.active { color: #07c160; }
+  .nav-item .nav-icon { font-size: 22px; margin-bottom: 2px; }
+  .chat-detail { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #ededed; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s ease; z-index: 200; }
+  .chat-detail.active { transform: translateX(0); }
+  .msg-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
+  .msg-row { display: flex; align-items: flex-start; margin-bottom: 15px; }
+  .msg-row.left { justify-content: flex-start; }
+  .msg-row.right { justify-content: flex-end; }
+  .msg-avatar { width: 40px; height: 40px; border-radius: 4px; overflow: hidden; flex-shrink: 0; background: #ccc; }
+  .msg-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .msg-row.left .msg-avatar { margin-right: 10px; }
+  .msg-row.right .msg-avatar { margin-left: 10px; }
+  .msg { max-width: calc(100% - 100px); padding: 10px 15px; border-radius: 6px; font-size: 15px; line-height: 1.4; word-wrap: break-word; position: relative; }
+  .msg.left { background: #fff; }
+  .msg.left::before { content: ""; position: absolute; left: -6px; top: 12px; width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-right: 6px solid #fff; }
+  .msg.right { background: #95ec69; }
+  .msg.right::after { content: ""; position: absolute; right: -6px; top: 12px; width: 0; height: 0; border-top: 6px solid transparent; border-bottom: 6px solid transparent; border-left: 6px solid #95ec69; }
+  .msg-image { max-width: 60%; margin-bottom: 10px; display: flex; align-items: flex-end; }
+  .msg-image img { max-width: 100%; border-radius: 8px; display: block; }
+  .msg-image.left { align-self: flex-start; margin-left: 10px; }
+  .msg-image.right { align-self: flex-end; margin-right: 10px; }
+  .msg-time { text-align: center; font-size: 12px; color: #b2b2b2; margin: 15px 0; width: 100%; display: block; }
+  .msg-sender-name { font-size: 12px; color: #888; margin-bottom: 4px; margin-left: 5px; display: block; }
+  .msg-content-wrapper { flex: 1; min-width: 0; display: flex; flex-direction: column; max-width: 85%; }
+  .chat-input-area { flex-shrink: 0; padding: 10px 15px; background: #f7f7f7; border-top: 1px solid #ddd; }
+  .chat-input-area input { width: 100%; padding: 10px 15px; border-radius: 6px; border: 1px solid #ddd; outline: none; font-size: 15px; }
+  .moments-view { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s ease; z-index: 300; }
+  .moments-view.active { transform: translateX(0); }
+  .moments-header { position: relative; height: 250px; background: url('images/back.png') center/cover no-repeat; background-color: #667eea; }
+  .moments-header .back-btn { position: absolute; top: 55px; left: 15px; color: #fff; cursor: pointer; font-size: 16px; display: flex; align-items: center; z-index: 10; text-shadow: 0 1px 3px #000; }
+  .moments-header .back-btn::before { content: "‹"; font-size: 28px; margin-right: 2px; line-height: 1; }
+  .moments-header .user-info { position: absolute; bottom: 20px; right: 20px; display: flex; align-items: center; color: #fff; text-shadow: 0 1px 3px #000; }
+  .moments-header .user-info img { width: 60px; height: 60px; border-radius: 6px; border: 2px solid #fff; margin-left: 10px; object-fit: cover; }
+  .moments-body { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 80px; }
+  .moment-item { display: flex; margin-bottom: 25px; }
+  .moment-avatar { width: 40px; height: 40px; border-radius: 4px; background: #07c160; margin-right: 12px; display: flex; justify-content: center; align-items: center; color: #fff; font-weight: bold; flex-shrink: 0; overflow: hidden; }
+  .moment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .moment-content { flex: 1; min-width: 0; }
+  .moment-name { color: #576b95; font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .moment-text { font-size: 15px; color: #000; margin-bottom: 8px; line-height: 1.4; }
+  .moment-images { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-bottom: 8px; }
+  .moment-images img { width: 100%; height: 100px; object-fit: cover; border-radius: 4px; }
+  .moment-footer { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: #888; }
+  .moment-like-btn { cursor: pointer; color: #576b95; }
+  .moments-interaction { background: #f7f7f7; border-radius: 4px; padding: 8px 10px; margin-top: 8px; font-size: 13px; position: relative; }
+  .moments-interaction::before { content: ""; position: absolute; top: -6px; left: 15px; border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 6px solid #f7f7f7; }
+  .like-list { color: #576b95; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 6px; }
+  .like-list .icon { color: #576b95; margin-right: 4px; font-size: 14px; }
+  .like-list .name { color: #576b95; font-weight: 600; }
+  .comment-list { border-top: 1px solid #e5e5e5; padding-top: 6px; }
+  .comment-item { margin-bottom: 4px; line-height: 1.4; }
+  .comment-item:last-child { margin-bottom: 0; }
+  .comment-item .name { color: #576b95; font-weight: 600; }
+  .comment-item .content { color: #333; }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="notch"></div>
+  <div class="status-bar"><span>21:33</span><span>📶 🔋</span></div>
+  <div class="wechat-app">
+    <div class="nav-header" id="mainHeader">微信(93)</div>
+    <div class="main-content">
+      <div class="tab-view active" id="tab-chats">
+        <div class="chat-item " onclick="openChat('余峻嘉')">
+          <div class="chat-avatar"><img src="images/junjiahead.png" alt="余峻嘉"></div>
+          <div class="chat-info">
+            <div class="chat-name">余峻嘉</div>
+            <div class="chat-msg">好</div>
+          </div>
+          <div class="chat-meta">
+            <div class="chat-time">10月14日</div>
+            
+            
+          </div>
+        </div>
+        <div class="chat-item " onclick="openChat('都狗')">
+          <div class="chat-avatar"><img src="images/doggohead.png" alt="都狗"></div>
+          <div class="chat-info">
+            <div class="chat-name">都狗</div>
+            <div class="chat-msg">你完全畜生</div>
+          </div>
+          <div class="chat-meta">
+            <div class="chat-time">10月14日</div>
+            
+            
+          </div>
+        </div>
+        <div class="chat-item " onclick="openChat('披薩×咖薩√')">
+          <div class="chat-avatar"><img src="images/karsahead.png" alt="披薩×咖薩√"></div>
+          <div class="chat-info">
+            <div class="chat-name">披薩×咖薩√</div>
+            <div class="chat-msg">🤡</div>
+          </div>
+          <div class="chat-meta">
+            <div class="chat-time">10月12日</div>
+            
+            
+          </div>
+        </div>
+        <div class="chat-item " onclick="openChat('小燦')">
+          <div class="chat-avatar"><img src="images/vampirehead.png" alt="小燦"></div>
+          <div class="chat-info">
+            <div class="chat-name">小燦</div>
+            <div class="chat-msg">👌🏻</div>
+          </div>
+          <div class="chat-meta">
+            <div class="chat-time">10月10日</div>
+            
+            
+          </div>
+        </div>
+        <div class="chat-item " onclick="openChat('gala')">
+          <div class="chat-avatar"><img src="images/galahead.jpg" alt="gala"></div>
+          <div class="chat-info">
+            <div class="chat-name">gala</div>
+            <div class="chat-msg">好的</div>
+          </div>
+          <div class="chat-meta">
+            <div class="chat-time">9月26日</div>
+            
+            
+          </div>
+        </div>
+        <div class="chat-item " onclick="openChat('徐神')">
+          <div class="chat-avatar"><img src="images/xiaoxuhead.jpg" alt="徐神"></div>
+          <div class="chat-info">
+            <div class="chat-name">徐神</div>
+            <div class="chat-msg">你也亚运加油</div>
+          </div>
+          <div class="chat-meta">
+            <div class="chat-time">9月21日</div>
+            
+            
+          </div>
+        </div>
+        <div class="chat-item " onclick="openChat('Tabe')">
+          <div class="chat-avatar"><img src="images/tabe.jpg" alt="Tabe"></div>
+          <div class="chat-info">
+            <div class="chat-name">Tabe</div>
+            <div class="chat-msg">你东西都带走了吗</div>
+          </div>
+          <div class="chat-meta">
+            <div class="chat-time">9月20日</div>
+            
+            <div class="chat-mute">🔕</div>
+          </div>
+        </div>
+        <div class="chat-item " onclick="openChat('xiaofang')">
+          <div class="chat-avatar"><img src="images/xiaofanghead.jpg" alt="xiaofang"></div>
+          <div class="chat-info">
+            <div class="chat-name">xiaofang</div>
+            <div class="chat-msg">你好</div>
+          </div>
+          <div class="chat-meta">
+            <div class="chat-time">8月6日</div>
+            
+            
+          </div>
+        </div>
+        <div class="chat-item " onclick="openChat('AAA26京狗窝')">
+          <div class="chat-avatar"><img src="images/jzz.png" alt="AAA26京狗窝"></div>
+          <div class="chat-info">
+            <div class="chat-name">AAA26京狗窝</div>
+            <div class="chat-msg">zzz: 很安心兄弟们</div>
+          </div>
+          <div class="chat-meta">
+            <div class="chat-time">5月24日</div>
+            
+            
+          </div>
+        </div></div>
+      <div class="tab-view" id="tab-contacts">
+        <div class="contact-item"><div class="contact-avatar"><img src="images/junjiahead.png" alt="余峻嘉"></div> 余峻嘉</div>
+        <div class="contact-item"><div class="contact-avatar"><img src="images/doggohead.png" alt="都狗"></div> 都狗</div>
+        <div class="contact-item"><div class="contact-avatar"><img src="images/karsahead.png" alt="披薩×咖薩√"></div> 披薩×咖薩√</div>
+        <div class="contact-item"><div class="contact-avatar"><img src="images/vampirehead.png" alt="小燦"></div> 小燦</div>
+        <div class="contact-item"><div class="contact-avatar"><img src="images/galahead.jpg" alt="gala"></div> gala</div>
+        <div class="contact-item"><div class="contact-avatar"><img src="images/xiaoxuhead.jpg" alt="徐神"></div> 徐神</div>
+        <div class="contact-item"><div class="contact-avatar"><img src="images/tabe.jpg" alt="Tabe"></div> Tabe</div>
+        <div class="contact-item"><div class="contact-avatar"><img src="images/xiaofanghead.jpg" alt="xiaofang"></div> xiaofang</div>
+        <div class="contact-item"><div class="contact-avatar"><img src="images/jzz.png" alt="AAA26京狗窝"></div> AAA26京狗窝</div></div>
+      <div class="tab-view" id="tab-discover">
+        <div class="discover-item" onclick="openMoments()"><div class="discover-icon">📷</div><div class="discover-text">朋友圈</div><div class="discover-arrow">›</div></div>
+        <div class="discover-item"><div class="discover-icon">📺</div><div class="discover-text">视频号</div><div class="discover-arrow">›</div></div>
+      </div>
+      <div class="tab-view" id="tab-me">
+        <div style="padding: 30px; text-align: center; background: #fff;">
+          <div style="width: 70px; height: 70px; border-radius: 8px; margin: 0 auto 10px; overflow: hidden;"><img src="images/hongqhead.png" style="width: 100%; height: 100%; object-fit: cover;"></div>
+          <div style="font-weight: bold; font-size: 18px;">hongqq</div>
+          <div style="color: #888; font-size: 13px; margin-top: 5px;">微信号：minghong0702</div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <div class="nav-item active" onclick="switchTab('tab-chats', '微信(93)')"><span class="nav-icon">💬</span>微信</div>
+      <div class="nav-item" onclick="switchTab('tab-contacts', '通讯录')"><span class="nav-icon">👥</span>通讯录</div>
+      <div class="nav-item" onclick="switchTab('tab-discover', '发现')"><span class="nav-icon">🧭</span>发现</div>
+      <div class="nav-item" onclick="switchTab('tab-me', '我')"><span class="nav-icon">👤</span>我</div>
+    </div>
+    <div class="chat-detail" id="chatDetail">
+      <div class="nav-header"><div class="back-btn" onclick="closeChat()">返回</div><span id="chatTitle">聊天</span></div>
+      <div class="msg-area" id="msgArea"></div>
+      <div class="chat-input-area"><input type="text" placeholder="输入消息..."></div>
+    </div>
+    <div class="moments-view" id="momentsView">
+      <div class="back-btn" onclick="closeMoments()" style="position: absolute; top: 55px; left: 15px; z-index: 999; color: #fff; font-size: 16px; display: flex; align-items: center; text-shadow: 0 1px 3px #000; cursor: pointer;"><span style="font-size: 28px; margin-right: 2px; line-height: 1;">‹</span> 返回</div>
+      <div class="moments-body" style="padding: 0; padding-bottom: 80px;">
+        <div class="moments-header"><div class="user-info"><span>hongqq</span><img src="images/hongqhead.png"></div></div>
+        <div style="padding: 15px;">
+        <div class="moment-item">
+          <div class="moment-avatar"><img src="images/karsahead.png" alt="披薩×咖薩√"></div>
+          <div class="moment-content">
+            <div class="moment-name">披薩×咖薩√</div>
+            <div class="moment-text">大吉大利今晚吃鷄謝謝雀巢帶飛</div>
+            
+            <div class="moment-footer">
+              <span>2026年10月7日 晚上22:40</span>
+              <span class="moment-like-btn" onclick="toggleLike(this, 'like-list-1792608613185')">❤️ 赞</span>
+            </div>
+            <div class="moments-interaction">
+              <div class="like-list" id="like-list-1792608613185"><span class="icon">❤️</span><span class="name">都狗</span>、<span class="name">hongqq</span>、<span class="name">余峻嘉</span></div>
+              
+        <div class="comment-list">
+          <div class="comment-item"><span class="name">披薩×咖薩√</span><span class="content">：我們真是太强啦</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content"> 回复 </span><span class="name">披薩×咖薩√</span><span class="content">：零擊殺零助攻零傷害你超零的</span></div><div class="comment-item"><span class="name">披薩×咖薩√</span><span class="content"> 回复 </span><span class="name">hongqq</span><span class="content">：又占口头便宜！</span></div><div class="comment-item"><span class="name">余峻嘉</span><span class="content">：還真？</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content"> 回复 </span><span class="name">余峻嘉</span><span class="content">：上了床就不要玩手機啦</span></div><div class="comment-item"><span class="name">披薩×咖薩√</span><span class="content"> 回复 </span><span class="name">余峻嘉</span><span class="content">：豬鼻好啊下次要不要試試瓦</span></div><div class="comment-item"><span class="name">披薩×咖薩√</span><span class="content"> 回复 </span><span class="name">hongqq</span><span class="content">：喂這是我的評論區你們太張狂了啊</span></div><div class="comment-item"><span class="name">余峻嘉</span><span class="content"> 回复 </span><span class="name">披薩×咖薩√</span><span class="content">：不要馁，我瓦很菜的啦</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content"> 回复 </span><span class="name">披薩×咖薩√</span><span class="content">：🤭</span></div>
+        </div>
+            </div>
+          </div>
+        </div>
+        <div class="moment-item">
+          <div class="moment-avatar"><img src="images/junjiahead.png" alt="余峻嘉"></div>
+          <div class="moment-content">
+            <div class="moment-name">余峻嘉</div>
+            <div class="moment-text">感謝隊友…</div>
+            
+        <div class="moment-images">
+          <img src="images/junjiafriend.png" alt=""><img src="images/junjiafriend5.png" alt=""><img src="images/junjiafriend6.png" alt="">
+        </div>
+            <div class="moment-footer">
+              <span>2026年10月2日 下午17:50</span>
+              <span class="moment-like-btn" onclick="toggleLike(this, 'like-list-1792644039522')">❤️ 赞</span>
+            </div>
+            <div class="moments-interaction">
+              <div class="like-list" id="like-list-1792644039522"><span class="icon">❤️</span><span class="name">都狗</span>、<span class="name">小燦</span>、<span class="name">hongqq</span>、<span class="name">披薩×咖薩√</span>、<span class="name">徐神</span>、<span class="name">gala</span></div>
+              
+        <div class="comment-list">
+          <div class="comment-item"><span class="name">小燦</span><span class="content">：峻嘉👍</span></div><div class="comment-item"><span class="name">都狗</span><span class="content">：有？</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content">：🥈</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content"> 回复 </span><span class="name">都狗</span><span class="content">：在有什麽？</span></div><div class="comment-item"><span class="name">都狗</span><span class="content"> 回复 </span><span class="name">hongqq</span><span class="content">：有？</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content"> 回复 </span><span class="name">都狗</span><span class="content">：有？</span></div><div class="comment-item"><span class="name">披薩×咖薩√</span><span class="content">：你倆超級吵欸</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content"> 回复 </span><span class="name">披薩×咖薩√</span><span class="content">：余峻嘉都沒說話</span></div><div class="comment-item"><span class="name">披薩×咖薩√</span><span class="content"> 回复 </span><span class="name">hongqq</span><span class="content">：豬鼻你看他！</span></div><div class="comment-item"><span class="name">余峻嘉</span><span class="content"> 回复 </span><span class="name">披薩×咖薩√</span><span class="content">：好啦、沒關係的餒</span></div><div class="comment-item"><span class="name">披薩×咖薩√</span><span class="content"> 回复 </span><span class="name">余峻嘉</span><span class="content">：……靠腰受不了</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content">：😋🥰🤗❤️</span></div>
+        </div>
+            </div>
+          </div>
+        </div>
+        <div class="moment-item">
+          <div class="moment-avatar"><img src="images/doggohead.png" alt="都狗"></div>
+          <div class="moment-content">
+            <div class="moment-name">都狗</div>
+            <div class="moment-text">下次金牌 愛各位隊友</div>
+            
+        <div class="moment-images">
+          <img src="images/doggofriend.jpg" alt=""><img src="images/doggofriend5.png" alt="">
+        </div>
+            <div class="moment-footer">
+              <span>2026年10月2日 下午16:35</span>
+              <span class="moment-like-btn" onclick="toggleLike(this, 'like-list-1792644861358')">❤️ 赞</span>
+            </div>
+            <div class="moments-interaction">
+              <div class="like-list" id="like-list-1792644861358"><span class="icon">❤️</span><span class="name">小燦</span>、<span class="name">披薩×咖薩√</span>、<span class="name">余峻嘉</span>、<span class="name">hongqq</span></div>
+              
+        <div class="comment-list">
+          <div class="comment-item"><span class="name">披薩×咖薩√</span><span class="content">：小柴可愛捏</span></div><div class="comment-item"><span class="name">披薩×咖薩√</span><span class="content">：怎麽不放掐小吉脖子那張</span></div><div class="comment-item"><span class="name">都狗</span><span class="content"> 回复 </span><span class="name">披薩×咖薩√</span><span class="content">：有點傷風敗俗</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content"> 回复 </span><span class="name">都狗</span><span class="content">：你傷風敗俗的事情做少了？</span></div><div class="comment-item"><span class="name">都狗</span><span class="content"> 回复 </span><span class="name">hongqq</span><span class="content">：誰給你慣的現在這麽猖狂</span></div><div class="comment-item"><span class="name">都狗</span><span class="content">：余峻嘉你出來</span></div><div class="comment-item"><span class="name">余峻嘉</span><span class="content"> 回复 </span><span class="name">都狗</span><span class="content">：ooooOoo我真有嗎……</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content"> 回复 </span><span class="name">余峻嘉</span><span class="content">：別聽都狗的現在這樣很好啊😎你愛我我愛你總之you and me</span></div><div class="comment-item"><span class="name">都狗</span><span class="content"> 回复 </span><span class="name">hongqq</span><span class="content">：太土了我要把你們清掃出朋友圈……</span></div>
+        </div>
+            </div>
+          </div>
+        </div>
+        <div class="moment-item">
+          <div class="moment-avatar"><img src="images/hongqhead.png" alt="hongqq"></div>
+          <div class="moment-content">
+            <div class="moment-name">hongqq</div>
+            <div class="moment-text">我真不知道是怎麽走到如今這步的，但從今天開始腦子你自由了工資你也自由了</div>
+            
+            <div class="moment-footer">
+              <span>2026年9月19日 晚上23:48</span>
+              <span class="moment-like-btn" onclick="toggleLike(this, 'like-list-1792645595609')">❤️ 赞</span>
+            </div>
+            <div class="moments-interaction">
+              <div class="like-list" id="like-list-1792645595609"><span class="icon">❤️</span><span class="name">都狗</span>、<span class="name">小燦</span>、<span class="name">余峻嘉</span>、<span class="name">披薩×咖薩√</span>、<span class="name">徐神</span></div>
+              
+        <div class="comment-list">
+          <div class="comment-item"><span class="name">披薩×咖薩√</span><span class="content">：工資自由了是啥意思</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content"> 回复 </span><span class="name">披薩×咖薩√</span><span class="content">：提前解約倆月工資沒了🤡</span></div><div class="comment-item"><span class="name">披薩×咖薩√</span><span class="content"> 回复 </span><span class="name">hongqq</span><span class="content">：我還以爲工資這方面又有什麽前輩經驗可以傳授，可惜</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content"> 回复 </span><span class="name">披薩×咖薩√</span><span class="content">：在可惜啥</span></div><div class="comment-item"><span class="name">都狗</span><span class="content"> 回复 </span><span class="name">hongqq</span><span class="content">：快點回來集訓啦</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content"> 回复 </span><span class="name">都狗</span><span class="content">：飛機明天的又沒法現在飛你着什麽急🙄</span></div><div class="comment-item"><span class="name">徐神</span><span class="content">：你屏蔽做好了？</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content"> 回复 </span><span class="name">徐神</span><span class="content">：放心吧已消息免打擾加朋友圈不可見一條龍</span></div><div class="comment-item"><span class="name">小燦</span><span class="content"> 回复 </span><span class="name">hongqq</span><span class="content">：那我真放心了</span></div>
+        </div>
+            </div>
+          </div>
+        </div>
+        <div class="moment-item">
+          <div class="moment-avatar"><img src="images/vampirehead.png" alt="小燦"></div>
+          <div class="moment-content">
+            <div class="moment-name">小燦</div>
+            <div class="moment-text">生日来一顿火锅鸡真是美滋滋啊</div>
+            
+        <div class="moment-images">
+          <img src="images/vampirefriend.jpg" alt="">
+        </div>
+            <div class="moment-footer">
+              <span>2026年8月24日 晚上23:23</span>
+              <span class="moment-like-btn" onclick="toggleLike(this, 'like-list-1792646386915')">❤️ 赞</span>
+            </div>
+            <div class="moments-interaction">
+              <div class="like-list" id="like-list-1792646386915"><span class="icon">❤️</span><span class="name">hongqq</span>、<span class="name">都狗</span>、<span class="name">gala</span>、<span class="name">余峻嘉</span>、<span class="name">徐神</span></div>
+              
+        <div class="comment-list">
+          <div class="comment-item"><span class="name">小燦</span><span class="content">：刘大咖火锅鸡总店</span></div><div class="comment-item"><span class="name">都狗</span><span class="content"> 回复 </span><span class="name">小燦</span><span class="content">：不賴，生快</span></div><div class="comment-item"><span class="name">余峻嘉</span><span class="content">：🎂</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content">：生日快樂燦</span></div><div class="comment-item"><span class="name">hongqq</span><span class="content"> 回复 </span><span class="name">都狗</span><span class="content">：不對你倆怎麽認識的？</span></div><div class="comment-item"><span class="name">小燦</span><span class="content"> 回复 </span><span class="name">hongqq</span><span class="content">：嘿嘿那天撞车之后就加了啊，你不知道吧？</span></div><div class="comment-item"><span class="name">徐神</span><span class="content">：爱你灿明天见</span></div><div class="comment-item"><span class="name">小燦</span><span class="content"> 回复 </span><span class="name">徐神</span><span class="content">：马上又要打训练赛了説这些</span></div><div class="comment-item"><span class="name">小燦</span><span class="content"> 回复 </span><span class="name">余峻嘉</span><span class="content">：嘉哥也吃</span></div><div class="comment-item"><span class="name">gala</span><span class="content">：生日快乐小灿</span></div><div class="comment-item"><span class="name">小燦</span><span class="content"> 回复 </span><span class="name">gala</span><span class="content">：一起加油</span></div>
+        </div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const myAvatarUrl = 'images/hongqhead.png';
+  const myNickname = 'hongqq';
+  const chatData = {
+    '余峻嘉': {
+      avatar: 'images/junjiahead.png',
+      isGroup: false,
+      messages: [
+        { type: 'time', text: '2025年11月5日 下午16:49' },
+        { type: 'left', text: '我是余峻嘉' },
+        { type: 'time', text: '你已添加了峻峻嘉嘉，以上是打招呼的消息。' },
+        { type: 'right', text: '所以爲什麽我們還要單獨加微信啊' },
+        { type: 'right', text: '我們都有line了' },
+        { type: 'left', text: '在lpl生活肯定要的餒' },
+        { type: 'left', text: '而且你之後還要轉賬什麽的' },
+        { type: 'left', text: '沒關係很快就會習慣的' },
+        { type: 'right', text: '嘿嘿嘿好' },
+        { type: 'time', text: '2025年12月30日 中午12:15' },
+        { type: 'right', text: '[圖片]' },
+        { type: 'right', text: '高鐵站挺大的呢？' },
+        { type: 'left', text: '今年會坐好多次高鐵餒，都可以拍' },
+        { type: 'right', text: '你怎麽微信打字也要一直餒啊==' },
+        { type: 'left', text: 'QQ' },
+        { type: 'time', text: '2026年1月1日 凌晨0:00' },
+        { type: 'right', text: '嘉哥新年快樂！🎆' },
+        { type: 'time', text: '2026年1月1日 凌晨0:15' },
+        { type: 'left', text: '剛打完排位才看到消息' },
+        { type: 'left', text: '小吉也新年快樂' },
+        { type: 'right', text: 'line上也要回我' },
+        { type: 'left', text: '好' },
+        { type: 'right', text: '今年也一起加油' },
+        { type: 'left', text: '嗯 當然' },
+        { type: 'right', text: '一起拿冠軍？' },
+        { type: 'left', text: '志向好大哈哈' },
+        { type: 'left', text: '再看看吧，再看看' },
+        { type: 'time', text: '2026年1月10日 中午11:00' },
+        { type: 'right', text: '嘉哥嘉哥完蛋了我東西沒拿房卡也消失了我是不是出門時忘在房間了😱' },
+        { type: 'left', text: '房卡在我這' },
+        { type: 'left', text: '我們一起出去的呀你忘了' },
+        { type: 'left', text: '我在飯店大廳這，你快來吧' },
+        { type: 'right', text: '嘿嘿好' },
+        { type: 'left', text: '記得回房間多拿件外套，只有隊服太薄了' },
+        { type: 'right', text: '好😘' },
+        { type: 'time', text: '2026年2月17日 凌晨0:00' },
+        { type: 'left', text: '小吉新年快樂' },
+        { type: 'time', text: '2026年2月17日 凌晨0:27' },
+        { type: 'right', text: '剛打完排位才看到消息' },
+        { type: 'right', text: '嘉哥也新年快樂' },
+        { type: 'left', text: '故意遲？' },
+        { type: 'right', text: '哪有，真在排位😫' },
+        { type: 'right', text: '馬上就要季後賽了怎麽敢閒下來……' },
+        { type: 'left', text: '好啦我也是' },
+        { type: 'left', text: '靠腰我十一點出頭那場排位還有人一直送頭，很氣人餒' },
+        { type: 'left', text: '……' },
+        { type: 'left', text: '努力還是會有用的' },
+        { type: 'right', text: '嗯嗯' },
+        { type: 'time', text: '2026年3月8日 晚上22:24' },
+        { type: 'right', text: '三比零欸，嘉哥爽了嗎？' },
+        { type: 'left', text: '爽喔。去巴西了' },
+        { type: 'right', text: '對位pom？' },
+        { type: 'left', text: '明天還要打餒，不說' },
+        { type: 'time', text: '2026年3月16日 中午11:30' },
+        { type: 'right', text: '你采訪說想和我拿冠軍？🫣' },
+        { type: 'right', text: '喂，抄我的話！版權費！' },
+        { type: 'left', text: '……好啦下意識就想到你' },
+        { type: 'left', text: '有這麽說過' },
+        { type: 'left', text: '[轉賬]' },
+        { type: 'right', text: '斷句是故意的還是有意的' },
+        { type: 'right', text: '春節的也要補給我！' },
+        { type: 'left', text: '但你成年了餒' },
+        { type: 'left', text: '[轉賬]' },
+        { type: 'right', text: '嘿嘿謝謝嘉哥😊' },
+        { type: 'time', text: '2026年4月18日 下午15:02' },
+        { type: 'right', text: '子正把多寶帶回來了🐕' },
+        { type: 'right', text: '有點像拖把，' },
+        { type: 'right', text: '你摸過她嗎？' },
+        { type: 'time', text: '2026年4月18日 下午15:08' },
+        { type: 'left', text: '有點太小了，我怕控制不好力量餒。等她再大一點吧' },
+        { type: 'right', text: '這樣以後她要和你不親了🫣' },
+        { type: 'right', text: '不過也沒關係，和我親就行，一家一樣的😋' },
+        { type: 'left', text: '說什麽啦' },
+        { type: 'time', text: '2026年5月23日 下午13:21' },
+        { type: 'right', text: '準備去餵多寶，你等會給她擦下嘴，我回去補個覺' },
+        { type: 'left', text: '好' },
+        { type: 'right', text: '訂的鬧鐘也把你弄醒了？就在床頭我剛剛應該伸手關一下的🙇🏻' },
+        { type: 'left', text: '有一點吧，沒關係' },
+        { type: 'time', text: '2026年5月23日 下午14:17' },
+        { type: 'left', text: '子正在群問餵過沒有，我先替你答了' },
+        { type: 'time', text: '2026年6月10日 中午11:23' },
+        { type: 'right', text: '幹余峻嘉昨晚都說了，如果你不舒服就要直接跟我講的😠' },
+        { type: 'right', text: '這下好了我後背被你抓好痛欸，而且現在項鏈鬆掉，根本沒法戴😡' },
+        { type: 'right', text: '求的平安符，怎麽說' },
+        { type: 'left', text: '對不起QQ' },
+        { type: 'left', text: '那你戴我的那條吧，我的給你' },
+        { type: 'right', text: '……' },
+        { type: 'left', text: '我這條也是自己去求來保平安順遂的餒' },
+        { type: 'left', text: '就當壽星送禮物？不要生氣嘛QQ' },
+        { type: 'left', text: '但戴了一年半了你別嫌棄QQ' },
+        { type: 'right', text: '我沒生氣' },
+        { type: 'right', text: '沒嫌棄' },
+        { type: 'right', text: '你記得自己再去求一條' },
+        { type: 'left', text: '嗯嗯。我們很快就回台灣了嘛' },
+        { type: 'time', text: '2026年7月14日 下午18:10' },
+        { type: 'left', text: '小燦剛剛說你貼太近了，我就和他說你是在看我的手機' },
+        { type: 'left', text: '鏡頭前還是不要……' },
+        { type: 'right', text: '我又不知道有鏡頭😓' },
+        { type: 'right', text: '再說了你也說是看手機啊，他信了嗎' },
+        { type: 'left', text: '小燦說眼見爲實，他看到你在蹭後頸了……' },
+        { type: 'right', text: '那就是沒信' },
+        { type: 'right', text: '但那又沒什麽🤨' },
+        { type: 'left', text: 'QQ' },
+        { type: 'right', text: '好啦我會多注意的' },
+        { type: 'time', text: '2026年8月2日 晚上22:13' },
+        { type: 'right', text: '對不起' },
+        { type: 'right', text: '嘉哥我今天情緒沒控制住😭' },
+        { type: 'right', text: '連敗好難受，一不小心氣上頭就每個人都説了兩句' },
+        { type: 'right', text: '嘉哥你也不要生我氣好不好' },
+        { type: 'left', text: '怎麽會 不要擔心啦' },
+        { type: 'left', text: '大家都知道開噴是爲了我們好啊' },
+        { type: 'left', text: '如果實在擔心那跟他們每個人單獨講一下也就好了' },
+        { type: 'right', text: '好😭' },
+        { type: 'left', text: '沒關係啦不要緊張' },
+        { type: 'time', text: '2026年8月5日 凌晨03:50' },
+        { type: 'right', text: '嘉哥你還好嗎' },
+        { type: 'right', text: '我聽燦說小白講會有替補打野真的假的' },
+        { type: 'right', text: '嘉哥？' },
+        { type: 'time', text: '2026年8月5日 凌晨05:35' },
+        { type: 'left', text: '嗯' },
+        { type: 'time', text: '2026年8月5日 中午11:52' },
+        { type: 'right', text: '以爲你睡着了所以我也睡了，才看消息' },
+        { type: 'right', text: '要相信！你就是我心中最好的打野啊🥺我多陪陪你就好了' },
+        { type: 'left', text: '還是得有足夠有説服力的表現啊，我也沒法說服我自己' },
+        { type: 'right', text: '別這樣' },
+        { type: 'time', text: '2026年8月13日 凌晨01:27' },
+        { type: 'right', text: 'pom打野今天是來我房間還是我去你房間？' },
+        { type: 'right', text: 'pom打野今天很帥喔' },
+        { type: 'left', text: '好啦，你來我這就好' },
+        { type: 'right', text: '沒別的想說？' },
+        { type: 'left', text: '……pog中單今天兔子玩得很好' },
+        { type: 'right', text: '沒錯沒錯嘉哥很聰明🥰' },
+        { type: 'time', text: '2026年8月14日 凌晨00:15' },
+        { type: 'right', text: '你看懂杰西打野什麽意思了嗎' },
+        { type: 'left', text: '教練應該有他的理由吧，我當時也覺得不是不能玩' },
+        { type: 'right', text: '不是不能玩和能贏游戲區別可太大了' },
+        { type: 'time', text: '2026年8月16日 晚上20:51' },
+        { type: 'right', text: '嘉哥你把門開開，我在門口，給你帶了晚飯' },
+        { type: 'left', text: '謝謝小吉。我不是很餓，你自己拿去吃就好' },
+        { type: 'left', text: '[轉賬]' },
+        { type: 'right', text: '你知道這不是重點……你先把門打開好嗎？' },
+        { type: 'left', text: '讓我先一個人呆著好嗎' },
+        { type: 'right', text: '。' },
+        { type: 'right', text: '有需要可以叫我' },
+        { type: 'left', text: '謝謝小吉' },
+        { type: 'left', text: '對不起' },
+        { type: 'right', text: '沒有什麽對不起的' },
+        { type: 'time', text: '2026年8月31日 凌晨04:33' },
+        { type: 'right', text: '嘉哥你還好嗎……' },
+        { type: 'left', text: '不好。' },
+        { type: 'right', text: '我懂的，我們都知道不怪你' },
+        { type: 'left', text: '你又沒做過替補，沒有隨時會被替補換下去，你十九歲未來可期而我二十四歲沒剩幾年可打，你怎麽懂' },
+        { type: 'left', text: '不要再來煩我了好嗎，今天。我只想自己冷靜一下，你感覺不出來我真的很累嗎' },
+        { type: 'time', text: '2026年8月31日 凌晨04:50' },
+        { type: 'right', text: '是因爲你知道，只有我真的會去在意你的感受' },
+        { type: 'right', text: '所以才對我擺臉色，說最重的話嗎' },
+        { type: 'right', text: '你現在又覺得帶我過來和相信我是一種錯誤了？' },
+        { type: 'right', text: '余峻嘉我知道你很痛苦，我輸了我也很痛苦，我看到你這樣我也很痛苦' },
+        { type: 'right', text: '但又憑什麽？' },
+        { type: 'time', text: '2026年8月31日 凌晨04:57' },
+        { type: 'left', text: '在你面前我下意識精神就太鬆了所以' },
+        { type: 'left', text: '我很抱歉' },
+        { type: 'left', text: '我來找你' },
+        { type: 'right', text: '別過來了。我要睡了，你也早點睡吧。' },
+        { type: 'left', text: '……好。' },
+        { type: 'time', text: '2026年9月13日 晚上21:49' },
+        { type: 'right', text: '今天一個個找開會是doggo提的' },
+        { type: 'right', text: '你是我第一個找的人' },
+        { type: 'right', text: '我也只是想你不要那麽沉默下去' },
+        { type: 'left', text: '我知道' },
+        { type: 'right', text: '嘉哥你說努力真的有用嗎' },
+        { type: 'left', text: '……' },
+        { type: 'left', text: '應該。還是會吧' },
+        { type: 'left', text: '至少過程有一些開心的東西' },
+        { type: 'right', text: '我們還能去世界賽嗎…………' },
+        { type: 'left', text: '未來的事很難知道吧。' },
+        { type: 'time', text: '2026年9月19日 晚上23:20' },
+        { type: 'left', text: '沒關係的小吉' },
+        { type: 'left', text: '我們調整一下明天就回去了？不要不開心啦' },
+        { type: 'left', text: '早上的航班，今晚得抓緊睡一下' },
+        { type: 'left', text: '你睡不踏實的話可以來我這' },
+        { type: 'right', text: '我也不是說多難過。只是。確實就差一步啊' },
+        { type: 'right', text: '剛剛收拾東西時他們就說要提前解約，說基地的東西會在我回台灣之後幫我收拾打包寄過去，運費倒是出得乾脆' },
+        { type: 'right', text: '哪有這樣的' },
+        { type: 'left', text: '我也是啊……就當提前放假了，嗯？' },
+        { type: 'left', text: '放寬心，我聽一件他們說了，戰馬人很好的' },
+        { type: 'right', text: '好——' },
+        { type: 'right', text: '我在門口了，嘉哥開門' },
+        { type: 'time', text: '2026年10月1日 下午15:27' },
+        { type: 'right', text: '[圖片]' },
+        { type: 'right', text: '看，都狗拍的，你被拎著死魚的包哥追著跑' },
+        { type: 'right', text: '好好笑' },
+        { type: 'right', text: '我要發朋友圈給他們看' },
+        { type: 'left', text: '哈哈哈哈幹嘛啦不要啦' },
+        { type: 'right', text: '嘉哥這幾天好開心' },
+        { type: 'left', text: '開心啊，有獎牌了。很舒服，回來了運氣也很好。我很喜歡海，這邊很漂亮。' },
+        { type: 'left', text: '剛剛在想一年如果是這種方式結束好像也不錯' },
+        { type: 'right', text: '嗯嗯' },
+        { type: 'time', text: '2026年10月7日 中午12:10' },
+        { type: 'right', text: '嘉哥你在高雄嗎' },
+        { type: 'right', text: '我剛剛報到完和朋友吃完飯' },
+        { type: 'right', text: '晚上我要住你家' },
+        { type: 'left', text: '可以啊，正好咖哥昨天有問我要不要玩pubg，一起' },
+        { type: 'right', text: '好！和嘉哥都好' },
+        { type: 'time', text: '2026年10月14日 下午17:38' },
+        { type: 'left', text: '什麽啦？我在開台餒' },
+        { type: 'left', text: '你那個 怎麽直接就發到聊天室' },
+        { type: 'right', text: '吃吧 吃吧 好狗' },
+        { type: 'right', text: '這個嗎' },
+        { type: 'left', text: '你別一直' },
+        { type: 'right', text: '平常我也沒有少説啊🥺哥哥真的是好狗😋' },
+        { type: 'left', text: '……聊天室不一樣，那麽多人' },
+        { type: 'left', text: '前幾天pubg你那麽叫我已經沒說你，你越來越過分' },
+        { type: 'left', text: '當時就應該讓你回去不要住家了' },
+        { type: 'right', text: '我錯了嘛' },
+        { type: 'right', text: '下次還敢' },
+        { type: 'right', text: '小嘉你要死了喔小嘉我黑鳳梨喔' },
+        { type: 'left', text: '……' },
+        { type: 'right', text: '還有哥以後直接line找我，分兩個軟件我漏了怎麽辦' },
+        { type: 'left', text: '好' }
+      ]
+    },
+    '都狗': {
+      avatar: 'images/doggohead.png',
+      isGroup: false,
+      messages: [
+        { type: 'time', text: '2026年2月13日 凌晨01:00' },
+        { type: 'right', text: '我是吉' },
+        { type: 'time', text: '以上是打招呼的信息' },
+        { type: 'left', text: '我通過了你的朋友驗證請求，現在我們可以開始聊天了' },
+        { type: 'right', text: '季後賽加油' },
+        { type: 'left', text: '老弟你突然加我微信好友就爲了說這個？' },
+        { type: 'left', text: '打算刪我line好友是不是' },
+        { type: 'right', text: '哪有！' },
+        { type: 'right', text: '只是他們說要勤於使用微信' },
+        { type: 'right', text: '所以你也要陪我！' },
+        { type: 'left', text: '好啦，陪你好不好？' },
+        { type: 'time', text: '2026年2月17日 凌晨0:07' },
+        { type: 'right', text: '新年快樂紅包拿來' },
+        { type: 'left', text: '又來？上次我過生日也哄我轉，我是壽星欸' },
+        { type: 'left', text: '你掉錢眼了？' },
+        { type: 'left', text: '[轉賬]' },
+        { type: 'right', text: '嘿嘿謝謝都狗' },
+        { type: 'right', text: '哥最好了回消息超快' },
+        { type: 'left', text: '季後賽加油喔，你和峻嘉' },
+        { type: 'right', text: '那是當然啦' },
+        { type: 'right', text: '好好休息少熬夜' },
+        { type: 'left', text: '我才不要我還要看你們去巴西的比賽直播' },
+        { type: 'left', text: '敢不去你死定了' },
+        { type: 'right', text: '🤗😝' },
+        { type: 'left', text: '還是少給我發微信，我通知一直關著還是容易漏' },
+        { type: 'right', text: '好' },
+        { type: 'time', text: '2026年6月6日 凌晨02:11' },
+        { type: 'left', text: '今天加油喔' },
+        { type: 'left', text: '寶寶你要去msi的' },
+        { type: 'right', text: '好難啊哥，怎麽樣能贏？' },
+        { type: 'right', text: '沒有人覺得我們會贏，甚至我感覺俱樂部大部分也不覺得會贏' },
+        { type: 'right', text: '我真的很想去' },
+        { type: 'left', text: '那就盡力了就好' },
+        { type: 'time', text: '2026年6月11日 凌晨01:24' },
+        { type: 'left', text: '老弟你和余峻嘉能不能收斂點' },
+        { type: 'left', text: '項鏈換戴的情趣都搞出來了牛逼喔' },
+        { type: 'left', text: '被密看的第一眼我以爲打太久游戲眼花了' },
+        { type: 'right', text: '余峻嘉給我的啊😋🤗' },
+        { type: 'left', text: '……跟你這種隨隨便便尾巴就翹上天的小弟弟沒話講' },
+        { type: 'right', text: '🐕' },
+        { type: 'time', text: '2026年8月5日 凌晨03:55' },
+        { type: 'right', text: '好像我們要有替補打野了' },
+        { type: 'right', text: '可是一切本來好像都在變好不是嗎，爲什麽感覺又要出問題了' },
+        { type: 'right', text: '很不好的預感' },
+        { type: 'left', text: '擔心他？' },
+        { type: 'right', text: '你回訊息的速度根本不像把通知關了==' },
+        { type: 'right', text: '不止他吧，全隊可能又要，哎，就是很不好的預感' },
+        { type: 'left', text: '還不是因爲你可能會隨時彈消息我才開的通知' },
+        { type: 'left', text: '好心沒好報' },
+        { type: 'left', text: '順其自然吧，唉' },
+        { type: 'left', text: '太多我們改變不了的事' },
+        { type: 'right', text: '😭' },
+        { type: 'time', text: '2026年8月31日 凌晨05:24' },
+        { type: 'right', text: '[聊天記錄]' },
+        { type: 'right', text: '和余峻嘉吵架了' },
+        { type: 'right', text: '他真的有點傷害到我了我不要和他好了' },
+        { type: 'time', text: '2026年8月31日 凌晨05:59' },
+        { type: 'left', text: '你知道通宵登山歸來，好不容易手機有信號，打開來就是十九歲小弟弟跟比自己還大一歲的哥哥鬧脾氣，然後還要幫這兩條來處理情感問題，有多辛苦嗎' },
+        { type: 'right', text: '[轉賬]' },
+        { type: 'right', text: '別講那些有的沒的' },
+        { type: 'left', text: '巴巴博一' },
+        { type: 'right', text: '？' },
+        { type: 'left', text: '裝傻啊。假裝一切沒發生過，或者說些比較笨的話逗人開心' },
+        { type: 'left', text: '你最擅長了，狗嘴吐不出象牙呀' },
+        { type: 'right', text: '這是在駡我嗎' },
+        { type: 'right', text: '我這次知道了象牙是珍貴東西的意思' },
+        { type: 'left', text: '哇那寶寶真的好聰明喔' },
+        { type: 'right', text: '🥰' },
+        { type: 'right', text: '不對我生氣著呢，我要分手！' },
+        { type: 'left', text: '得了吧，你要真願意分，我錢翻倍退你' },
+        { type: 'left', text: '怎麽樣？小財迷？' },
+        { type: 'right', text: '……算了錢你就收著吧' },
+        { type: 'left', text: '對嘛，瞞不過你哥哥我的' },
+        { type: 'left', text: '你哥哥我是真睏了，你也早點睡覺喔' },
+        { type: 'right', text: '嗯嗯' },
+        { type: 'time', text: '2026年9月13日 凌晨02:32' },
+        { type: 'right', text: '我真不知道該怎麽辦了' },
+        { type: 'right', text: '馬上冒牌賽就要來感覺我們真的連游戲都不會打了' },
+        { type: 'right', text: '好想贏啊但是怎麽辦' },
+        { type: 'right', text: '我問余峻嘉他也沉默他好像也沒辦法' },
+        { type: 'right', text: '可以打電話嗎' },
+        { type: 'time', text: '2026年9月13日 凌晨03:32' },
+        { type: 'right', text: '通話時長 50:55📞' },
+        { type: 'right', text: '謝謝哥' },
+        { type: 'left', text: '剛剛電話忘記講了，沒有說你現在必須這麽去做的意思，只是小吉你可能自己也會覺得好受點' },
+        { type: 'left', text: '至於峻嘉，很多時候，也可以給他留一點沉默的空間吧。他的環境確實和你的不太一樣' },
+        { type: 'right', text: '我知道了，謝謝哥' },
+        { type: 'left', text: '好了別哭啦' },
+        { type: 'right', text: '剛剛電話敢説出去試試看' },
+        { type: 'left', text: '哇嚓對你哥哥什麽態度小弟弟別裝' },
+        { type: 'time', text: '2026年9月19日 晚上23:15' },
+        { type: 'right', text: '又輸冒泡賽又被通知提前解約又少了集訓時間，簡直三敗' },
+        { type: 'right', text: '好笑，所以這一年到底爲啥吃這麽多苦' },
+        { type: 'time', text: '2026年9月19日 晚上23:53' },
+        { type: 'left', text: '好啦快回來啦你也知道缺時間啊' },
+        { type: 'left', text: '你倆不在馬哥天天逮著我練' },
+        { type: 'time', text: '2026年9月20日 早上06:11' },
+        { type: 'right', text: '早安都狗，昨晚在嘉哥房間沾枕就着了' },
+        { type: 'time', text: '2026年9月20日 早上09:25' },
+        { type: 'left', text: '誰問你了？' },
+        { type: 'time', text: '2026年10月1日 下午15:25' },
+        { type: 'left', text: '[圖片]' },
+        { type: 'right', text: '哈哈哈哈哈我要發給嘉哥' },
+        { type: 'time', text: '2026年10月14日 下午16:41' },
+        { type: 'right', text: '哥記得幫我帶點美國特產回來' },
+        { type: 'left', text: '真把我當成代購團？' },
+        { type: 'left', text: '你完全畜生' }
+      ]
+    },
+    '披薩×咖薩√': {
+      avatar: 'images/karsahead.png',
+      isGroup: false,
+      messages: [
+        { type: 'time', text: '2026年2月17日 凌晨02:02' },
+        { type: 'right', text: '我是吉娃娃' },
+        { type: 'time', text: '2026年2月17日 早上09:33' },
+        { type: 'left', text: '我通過了你的朋友驗證請求，現在我們可以開始聊天了' },
+        { type: 'right', text: '新年快樂紅包拿來^^' },
+        { type: 'left', text: '小吉你春節加我好友就是要錢？' },
+        { type: 'right', text: '是紅包' },
+        { type: 'right', text: '^^' },
+        { type: 'left', text: '行吧！' },
+        { type: 'left', text: '[轉賬]' },
+        { type: 'left', text: '夠嗎' },
+        { type: 'right', text: '謝謝咖哥我還想要手錶' },
+        { type: 'left', text: '靠腰啦不可以' },
+        { type: 'right', text: '我愛手錶123' },
+        { type: 'time', text: '2026年7月2日 凌晨01:44' },
+        { type: 'right', text: '咖哥猜猜今天什麽日子' },
+        { type: 'left', text: '[轉賬]' },
+        { type: 'left', text: '小吉生日快樂，十九歲嘍' },
+        { type: 'right', text: '嘿嘿咖哥懂我' },
+        { type: 'right', text: '那手錶' },
+        { type: 'left', text: '不可以' },
+        { type: 'right', text: '😭' },
+        { type: 'time', text: '2026年8月12日 凌晨04:05' },
+        { type: 'left', text: '峻嘉還好嗎' },
+        { type: 'left', text: '昨天line他，他完全打太極欸' },
+        { type: 'left', text: '還想分享一下替補經歷呢真是傷哥哥的心' },
+        { type: 'right', text: '剛打完訓練賽' },
+        { type: 'right', text: '居然會回你line' },
+        { type: 'right', text: '那就是還有力氣' },
+        { type: 'left', text: '喂你倆完全沒大沒小啊' },
+        { type: 'time', text: '2026年10月12日 晚上20:30' },
+        { type: 'left', text: '瓦？' },
+        { type: 'right', text: '不玩，打很爛' },
+        { type: 'left', text: 'pubg？' },
+        { type: 'right', text: '差不多爛' },
+        { type: 'left', text: '那你打算玩啥' },
+        { type: 'right', text: '今天聊天室問峻嘉魔獸玩不玩，他不理我' },
+        { type: 'left', text: '靠北你直接密他啊發聊天室本來就很難看見的好不好' },
+        { type: 'right', text: '我想讓大家都知道他也魔獸一下啊' },
+        { type: 'left', text: '🤡' }
+      ]
+    },
+    '小燦': {
+      avatar: 'images/vampirehead.png',
+      isGroup: false,
+      messages: [
+        { type: 'time', text: '2025年11月15日 下午17:00' },
+        { type: 'left', text: '我是vampire，可以叫我小灿嘿嘿' },
+        { type: 'time', text: '你已添加了土豆地雷三百炮，以上是打招呼的消息。' },
+        { type: 'right', text: '嗨。好有趣的微信名' },
+        { type: 'right', text: '可以叫我小吉' },
+        { type: 'left', text: '嘿嘿你好小吉，我是你接下来的辅助' },
+        { type: 'left', text: '接下来让我们和睦相处吧！' },
+        { type: 'left', text: '我把其他队友的微信推给你？' },
+        { type: 'right', text: '好的，謝謝小燦' },
+        { type: 'left', text: '燦就是灿吗？' },
+        { type: 'right', text: '是的是的' },
+        { type: 'left', text: '哈哈哈哈哈哈哈哈哈我丈育了' },
+        { type: 'left', text: '小吉跟我不用紧张的哈' },
+        { type: 'right', text: '好~' },
+        { type: 'left', text: '07年好年轻啊' },
+        { type: 'right', text: '小燦你是05的，也很年輕啊' },
+        { type: 'left', text: '说这些♪(^∇^*)♪(^∇^*)' },
+        { type: 'time', text: '2025年12月31日 下午23:59' },
+        { type: 'left', text: '小吉2025年快乐' },
+        { type: 'time', text: '2026年1月1日 下午0:00' },
+        { type: 'left', text: '小吉2026年快乐' },
+        { type: 'right', text: '哈哈哈哈哈哈小燦新年快樂' },
+        { type: 'left', text: '😎' },
+        { type: 'time', text: '2026年2月17日 凌晨0:30' },
+        { type: 'right', text: '小燦新年快樂' },
+        { type: 'right', text: '本來想卡點的但是排位開了' },
+        { type: 'left', text: '哇小吉你居然还是用微信的' },
+        { type: 'left', text: '都不回群消息的，我以为都是峻嘉帮你转达呢' },
+        { type: 'right', text: '哪有啦' },
+        { type: 'right', text: '我只是看得比較少一點' },
+        { type: 'left', text: '哎呀忘了说了新年快乐' },
+        { type: 'left', text: '我的我的' },
+        { type: 'right', text: '哈哈哈哈哈哈' },
+        { type: 'time', text: '2026年3月8日 晚上22:18' },
+        { type: 'left', text: '哈哈哈哈哈哈我赵哲灿也有进国际赛的一天啊！' },
+        { type: 'left', text: '哈哈哈哈哈哈哈哈哈哈哈' },
+        { type: 'left', text: '果然跟着你们有肉吃嘿嘿' },
+        { type: 'right', text: '你玩的也好啊，pog' },
+        { type: 'left', text: '对对对pog，嘿嘿' },
+        { type: 'left', text: '巴西我來了' },
+        { type: 'time', text: '2026年4月20日 晚上21:20' },
+        { type: 'left', text: '感觉多宝特别亲我' },
+        { type: 'left', text: '我是狗王' },
+        { type: 'right', text: '叫兩聲' },
+        { type: 'left', text: '又把我当傻子！' },
+        { type: 'time', text: '2026年5月23日 下午14:04' },
+        { type: 'left', text: '子正问你俩喂狗没有' },
+        { type: 'time', text: '2026年5月23日 下午17:21' },
+        { type: 'right', text: '我在補覺，狗下午我喂了' },
+        { type: 'left', text: '没事，峻嘉帮你说了' },
+        { type: 'left', text: '不过我去你房间没看到你人啊？' },
+        { type: 'right', text: '我在嘉哥房間' },
+        { type: 'left', text: '哦你在峻嘉房间，我说怎么不在' },
+        { type: 'left', text: '等一下所以你为什么在峻嘉房间' },
+        { type: 'right', text: '矮額' },
+        { type: 'right', text: '走錯了' },
+        { type: 'left', text: '啊这样' },
+        { type: 'time', text: '2026年7月14日 晚上19:37' },
+        { type: 'left', text: '小吉你和峻嘉真没什么吗？' },
+        { type: 'left', text: '脸快贴他脖子上了' },
+        { type: 'right', text: '沒有啊，怎麽了，我在看他手機' },
+        { type: 'left', text: '峻嘉也这么说的，但他说谎的样子太明显啧啧' },
+        { type: 'left', text: '瞒不过我名侦探土豆地雷' },
+        { type: 'left', text: '信他就有鬼了' },
+        { type: 'right', text: '好啦其實我在走神看貓和老鼠' },
+        { type: 'right', text: '你別告訴他' },
+        { type: 'left', text: '猫和老鼠那正确的' },
+        { type: 'left', text: '有品味' },
+        { type: 'left', text: '我一开始还以为你们串供' },
+        { type: 'left', text: '但如果要看猫和老鼠的话坐起来看就好啊你们这样很伤脊椎' },
+        { type: 'time', text: '2026年7月2日 下午14:20' },
+        { type: 'left', text: '小吉生日快乐，接下来也一起加油' },
+        { type: 'right', text: '一起加油' },
+        { type: 'time', text: '2026年8月2日 晚上22:30' },
+        { type: 'right', text: '對不起小燦我今天情緒沒控制住，一時氣上頭了😭' },
+        { type: 'left', text: '没关系都兄弟' },
+        { type: 'left', text: '大家都想赢，你提的问题也很好啊' },
+        { type: 'left', text: '说开了就好了' },
+        { type: 'right', text: '謝謝小燦😭' },
+        { type: 'left', text: '唉这有啥' },
+        { type: 'time', text: '2026年8月5日 凌晨03:48' },
+        { type: 'left', text: '你知道今晚或者明天会来一个替补打野吗？' },
+        { type: 'right', text: '真的假的燦？' },
+        { type: 'left', text: '真，小白亲口和我说的' },
+        { type: 'left', text: '峻嘉没和你说？' },
+        { type: 'left', text: '他是最早知道的' },
+        { type: 'time', text: '2026年8月24日 下午13:33' },
+        { type: 'right', text: '小燦生日快樂，心想事成~' },
+        { type: 'left', text: '我们的愿望应该是一个吧？' },
+        { type: 'right', text: '哈哈哈哈哈哈哈哈哈哈哈' },
+        { type: 'time', text: '2026年8月31日 晚上23:23' },
+        { type: 'left', text: '好想去世界赛' },
+        { type: 'left', text: '去年好像也是这几天我骑士之路输了' },
+        { type: 'left', text: '年初的时候我们不是好好的吗' },
+        { type: 'right', text: '是啊' },
+        { type: 'time', text: '2026年9月6日 下午13:54' },
+        { type: 'left', text: '你们俩中间有回去集训吗' },
+        { type: 'right', text: '沒有' },
+        { type: 'left', text: '好的' },
+        { type: 'time', text: '2026年9月19日 晚上23:16' },
+        { type: 'left', text: '你和峻嘉还回来吗' },
+        { type: 'right', text: '京東說不用回北京了，在台灣待著等寄東西就行' },
+        { type: 'left', text: '好吧' },
+        { type: 'left', text: '你明年还留在lpl吗，那样我们还能经常见到面' },
+        { type: 'right', text: '未來的事誰知道呢' },
+        { type: 'left', text: '那亚运加油' },
+        { type: 'right', text: '你也是……德杯加油' },
+        { type: 'time', text: '2026年10月10日 下午14:04' },
+        { type: 'left', text: '组排有空吗' },
+        { type: 'right', text: '🈚' },
+        { type: 'left', text: '👌🏻' }
+      ]
+    },
+    'gala': {
+      avatar: 'images/galahead.jpg',
+      isGroup: false,
+      messages: [
+        { type: 'time', text: '2025年11月15日 下午18:00' },
+        { type: 'right', text: '我是HongQ，隊長好' },
+        { type: 'time', text: '2025年11月15日 晚上19:01' },
+        { type: 'left', text: '我通過了你的朋友驗證請求，現在我們可以開始聊天了' },
+        { type: 'left', text: '哈喽哈喽' },
+        { type: 'left', text: '隊長好我是HongQ，剛剛來lpl，希望接下來隊長能多多包容' },
+        { type: 'left', text: '不要这么拘束啦，就叫嘎子就行' },
+        { type: 'left', text: '他们都叫你小吉？吉利的吉吗' },
+        { type: 'right', text: '對，吉娃娃的意思' },
+        { type: 'left', text: '好的' },
+        { type: 'left', text: '你把峻嘉微信推我吧' },
+        { type: 'right', text: '好的' },
+        { type: 'time', text: '2026年5月23日 下午14:07' },
+        { type: 'left', text: '小吉你在哪儿，灿在找你好像' },
+        { type: 'time', text: '2026年5月23日 下午17:23' },
+        { type: 'right', text: '抱歉，我睡着了，狗我有餵' },
+        { type: 'left', text: 'OKOK' },
+        { type: 'time', text: '2026年8月2日 下午23:50' },
+        { type: 'right', text: '對不起隊長我今天情緒沒控制住，一時氣上頭了😭' },
+        { type: 'left', text: '没事' },
+        { type: 'time', text: '2026年8月5日 中午12:44' },
+        { type: 'left', text: '新加入打野的微信，你有见到这个账号的话通过一下好友' },
+        { type: 'left', text: '[圖片]' },
+        { type: 'right', text: '好的' },
+        { type: 'left', text: '你多跟峻嘉聊聊' },
+        { type: 'right', text: '我知道' },
+        { type: 'time', text: '2026年9月26日 下午18:09' },
+        { type: 'left', text: '子正在问要不要打包点狗玩具一起寄过去' },
+        { type: 'right', text: '都可以' },
+        { type: 'left', text: '好的' }
+      ]
+    },
+    '徐神': {
+      avatar: 'images/xiaoxuhead.jpg',
+      isGroup: false,
+      messages: [
+        { type: 'time', text: '2025年11月15日 下午18:02' },
+        { type: 'right', text: '我是HongQ，徐神好' },
+        { type: 'time', text: '2025年11月15日 下午18:44' },
+        { type: 'left', text: '我通過了你的朋友驗證請求，現在我們可以開始聊天了' },
+        { type: 'left', text: '你好你好' },
+        { type: 'left', text: '小吉对吗' },
+        { type: 'left', text: '就正常叫我小徐就行了' },
+        { type: 'left', text: '哈哈哈哈哈' },
+        { type: 'right', text: '欸我們基地還有小燦' },
+        { type: 'right', text: '我們三個小字輩' },
+        { type: 'left', text: '哈哈哈哈哈确实' },
+        { type: 'time', text: '2026年4月20日 晚上20:50' },
+        { type: 'right', text: '小燦是狗王' },
+        { type: 'right', text: '小徐是什麽' },
+        { type: 'left', text: '小徐是人' },
+        { type: 'right', text: '居然沒騙到你' },
+        { type: 'right', text: '==' },
+        { type: 'time', text: '2026年8月2日 晚上23:40' },
+        { type: 'right', text: '對不起徐神我今天情緒沒控制住，一時氣上頭了😭' },
+        { type: 'left', text: '没关系呀没关系没关系，我们都有问题你只是说出来了' },
+        { type: 'left', text: '说出来是对的' },
+        { type: 'left', text: '很勇敢' },
+        { type: 'left', text: '👍' },
+        { type: 'right', text: '謝謝徐神……' },
+        { type: 'left', text: '好好休息' },
+        { type: 'time', text: '2026年9月11日 凌晨03:25' },
+        { type: 'right', text: '徐神生日快乐心想事成' },
+        { type: 'left', text: '希望吧哈哈，共同的愿望' },
+        { type: 'right', text: '🤗' },
+        { type: 'time', text: '2026年9月21日 下午17:10' },
+        { type: 'left', text: '小吉你和峻嘉直接回台湾了吗？还会回来北京这边吗' },
+        { type: 'right', text: '應該轉會期開之前不會了' },
+        { type: 'left', text: '那好吧。主要我看着他们在收拾你俩东西，我帮你俩盯着点，有什么比较重要不能丢的东西你俩和我说' },
+        { type: 'right', text: '謝謝徐神……' },
+        { type: 'right', text: '徐神德杯加油' },
+        { type: 'left', text: '小事' },
+        { type: 'left', text: '你也亚运加油' }
+      ]
+    },
+    'Tabe': {
+      avatar: 'images/tabe.jpg',
+      isGroup: false,
+      messages: [
+        { type: 'time', text: '2025年11月15日 下午18:04' },
+        { type: 'right', text: '我是HongQ，Tabe教練好' },
+        { type: 'left', text: '我通過了你的朋友驗證請求，現在我們可以開始聊天了' },
+        { type: 'left', text: '小吉好' },
+        { type: 'left', text: '教練好' },
+        { type: 'time', text: '2026年8月6日 晚上23:48' },
+        { type: 'left', text: '不要因为换人就影响情绪' },
+        { type: 'left', text: '你的状态太不稳定了' },
+        { type: 'right', text: '和情緒沒關係，和誰我都是想贏比賽的' },
+        { type: 'right', text: '我只是有时候确实不知道该怎么玩游戏' },
+        { type: 'left', text: '那为什么不会玩？训练赛好好的啊' },
+        { type: 'right', text: '……' },
+        { type: 'time', text: '2026年9月20日 下午18:29' },
+        { type: 'left', text: '你东西都带走了吗' }
+      ]
+    },
+    'xiaofang': {
+      avatar: 'images/xiaofanghead.jpg',
+      isGroup: false,
+      messages: [
+        { type: 'time', text: '2026年8月6日 晚上19:19' },
+        { type: 'left', text: '我是xiaofang' },
+        { type: 'time', text: '2026年8月6日 晚上23:43' },
+        { type: 'time', text: '你已添加了小方ovo，以上是打招呼的消息' },
+        { type: 'left', text: 'HongQ选手你好' },
+        { type: 'right', text: '你好' }
+      ]
+    },
+    'AAA26京狗窝': {
+      avatar: 'images/jzz.png',
+      isGroup: true,
+      messages: [
+        { type: 'time', text: '2026年5月23日 下午14:06' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '中野宝贝 醒了记得喂多宝' },
+        { type: 'left', sender: '小燦', senderAvatar: 'images/vampirehead.png', text: '我醒了' },
+        { type: 'left', sender: '小燦', senderAvatar: 'images/vampirehead.png', text: '怎么说' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '你会吗' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '我兄弟' },
+        { type: 'left', sender: '小燦', senderAvatar: 'images/vampirehead.png', text: '[图片]' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '牛逼' },
+        { type: 'left', sender: '小燦', senderAvatar: 'images/vampirehead.png', text: '我没喂' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '那你搁这怎么说怎么说呢' },
+        { type: 'time', text: '2026年5月23日 下午14:17' },
+        { type: 'left', sender: '余峻嘉', senderAvatar: 'images/junjiahead.png', text: '他好像已经喂过了' },
+        { type: 'left', sender: '余峻嘉', senderAvatar: 'images/junjiahead.png', text: '喂完继续睡觉去了' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '牛逼小吉' },
+        { type: 'left', sender: '小燦', senderAvatar: 'images/vampirehead.png', text: '[视频]' },
+        { type: 'time', text: '2026年5月23日 下午14:47' },
+        { type: 'time', text: '“zzz”拍了拍“小燦”' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '你鼓励的太早了' },
+        { type: 'left', sender: '小燦', senderAvatar: 'images/vampirehead.png', text: '😱' },
+        { type: 'time', text: '“zzz”拍了拍“小燦”' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '灿' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '帮我弄下多宝窝里的线' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '她好像把线扯到自己窝里了' },
+        { type: 'time', text: '2026年5月23日 晚上22:28' },
+        { type: 'left', sender: '小燦', senderAvatar: 'images/vampirehead.png', text: '我一会儿去看看' },
+        { type: 'time', text: '2026年5月23日 晚上22:46' },
+        { type: 'left', sender: '小燦', senderAvatar: 'images/vampirehead.png', text: '[视频]' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '你看那个监控的线和吹风机的线' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '[截图]' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '吹风机都长成这样了，你问我哪根线啊' },
+        { type: 'time', text: '2026年5月23日 晚上23:18' },
+        { type: 'left', sender: '小燦', senderAvatar: 'images/vampirehead.png', text: '[图片]' },
+        { type: 'time', text: 'zzz撤回了一条消息' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '感谢这位好兄弟' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '多宝晚上吃饭了吗' },
+        { type: 'left', sender: '小燦', senderAvatar: 'images/vampirehead.png', text: '[图片]' },
+        { type: 'left', sender: '小燦', senderAvatar: 'images/vampirehead.png', text: '喂饭的人来了' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '牛逼' },
+        { type: 'time', text: '“zzz”拍了拍“小燦”' },
+        { type: 'left', sender: '徐神', senderAvatar: 'images/xiaoxuhead.png', text: '牛逼' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '你在干嘛' },
+        { type: 'left', sender: '小燦', senderAvatar: 'images/vampirehead.png', text: '[视频]' },
+        { type: 'left', sender: '小燦', senderAvatar: 'images/vampirehead.png', text: '我监督他俩' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '牛逼' },
+        { type: 'left', sender: 'zzz', senderAvatar: 'images/zizhenghead.png', text: '很安心兄弟们' }
+      ]
+    }
+  };
+  function switchTab(tabId, title) {
+    document.querySelectorAll('.tab-view').forEach(tab => tab.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    document.getElementById('mainHeader').innerText = title;
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    closeChat(); closeMoments();
+  }
+  function openChat(name) {
+    document.getElementById('chatTitle').innerText = name;
+    const msgArea = document.getElementById('msgArea');
+    msgArea.innerHTML = '';
+    const data = chatData[name];
+    if (!data) return;
+    data.messages.forEach(msg => {
+      if (msg.type === 'time') {
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'msg-time'; timeDiv.innerText = msg.text;
+        msgArea.appendChild(timeDiv); return;
+      }
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'msg-row ' + msg.type;
+      const avatarDiv = document.createElement('div');
+      avatarDiv.className = 'msg-avatar';
+      const img = document.createElement('img');
+      if (msg.type === 'right') { img.src = myAvatarUrl; } 
+      else if (msg.senderAvatar && msg.senderAvatar.trim() !== '') { img.src = msg.senderAvatar; } 
+      else { img.src = data.avatar; }
+      avatarDiv.appendChild(img);
+      
+      const bubbleDiv = document.createElement('div');
+      if (msg.text && msg.text.includes('<img')) {
+        bubbleDiv.className = 'msg-image ' + msg.type; bubbleDiv.innerHTML = msg.text;
+      } else {
+        bubbleDiv.className = 'msg ' + msg.type;
+        if (msg.text && (msg.text.includes('<br>') || msg.text.includes('<br/>'))) { bubbleDiv.innerHTML = msg.text; } 
+        else { bubbleDiv.innerText = msg.text; }
+      }
+      if (data.isGroup && msg.type === 'left' && msg.sender) {
+        const senderName = document.createElement('div');
+        senderName.className = 'msg-sender-name'; senderName.innerText = msg.sender;
+        const wrapper = document.createElement('div'); wrapper.className = 'msg-content-wrapper';
+        wrapper.appendChild(senderName); wrapper.appendChild(bubbleDiv);
+        rowDiv.appendChild(avatarDiv); rowDiv.appendChild(wrapper);
+      } else {
+        if (msg.type === 'left') { rowDiv.appendChild(avatarDiv); rowDiv.appendChild(bubbleDiv); }
+        else { rowDiv.appendChild(bubbleDiv); rowDiv.appendChild(avatarDiv); }
+      }
+      msgArea.appendChild(rowDiv);
+    });
+    document.getElementById('chatDetail').classList.add('active');
+    msgArea.scrollTop = msgArea.scrollHeight;
+  }
+  function closeChat() { document.getElementById('chatDetail').classList.remove('active'); }
+  function openMoments() { document.getElementById('momentsView').classList.add('active'); }
+  function closeMoments() { document.getElementById('momentsView').classList.remove('active'); }
+  
+  function toggleLike(btn, listId) {
+    const list = document.getElementById(listId);
+    const isLiked = btn.classList.contains('liked');
+    if (!isLiked) {
+      btn.classList.add('liked'); btn.innerText = '❤️ 取消';
+      const mySpan = document.createElement('span');
+      mySpan.className = 'name liked-me'; mySpan.innerText = myNickname;
+      const icon = list.querySelector('.icon');
+      if (icon) {
+        const hasOtherNames = list.querySelectorAll('.name:not(.liked-me)').length > 0;
+        list.insertBefore(mySpan, icon.nextSibling);
+        if (hasOtherNames) {
+          const sep = document.createElement('span');
+          sep.innerText = '、'; sep.className = 'liked-me-sep';
+          list.insertBefore(sep, mySpan.nextSibling);
+        }
+      } else { list.appendChild(mySpan); }
+    } else {
+      btn.classList.remove('liked'); btn.innerText = '❤️ 赞';
+      const mySpan = list.querySelector('.liked-me');
+      const sep = list.querySelector('.liked-me-sep');
+      if (mySpan) mySpan.remove(); 
+      if (sep) sep.remove();
+    }
+  }
+</script>
+</body>
+</html>
